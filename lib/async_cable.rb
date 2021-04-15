@@ -8,4 +8,8 @@ module AsyncCable
   module_function def server
     @server ||= Server.new
   end
+
+  module_function def instance(game)
+    server.instances[game.id] ||= GameInstance.new(game: game)
+  end
 end
