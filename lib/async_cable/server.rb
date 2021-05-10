@@ -17,7 +17,7 @@ module AsyncCable
     end
 
     def call(env)
-      Async::WebSocket::Adapters::Rack.open(env, protocols: ["actioncable-v1-json"]) do |websocket_connection|
+      response = Async::WebSocket::Adapters::Rack.open(env, protocols: ["actioncable-v1-json"]) do |websocket_connection|
         connection = Connection.new(self, env, websocket_connection)
         connection.authorize!
         connections << connection
@@ -25,9 +25,13 @@ module AsyncCable
         while payload = websocket_connection.read
           connection.handle(payload)
         end
-      ensure
-        connections.each(&:cleanup)
       end
+
+      response[1]['rack.hijack'] = lambda do |stream|
+        response[2].call(stream)
+      end
+
+      [response[0], response[1], []]
     end
   end
 end
