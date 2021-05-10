@@ -6,14 +6,39 @@ module AsyncCable
   class Server
     attr_reader :connections, :instances, :pubsub
 
+    # TODO: Hack to make heroku redis work
+    class AuthenticatedRESP2
+      def initialize(credentials, protocol: Async::Redis::Protocol::RESP2)
+        @credentials = credentials
+        @protocol = protocol
+      end
+    
+      def client(stream)
+        client = @protocol.client(stream)
+        client.write_request(["AUTH", *@credentials])
+        client.read_response # Ignore response.
+        return client
+      end
+    end
+
     def initialize
       @connections = Set.new
       @instances = {}
-      @pubsub = Async::Redis::Client.new(Async::Redis.local_endpoint)
+      @pubsub = if ENV["REDIS_URL"]
+        uri = URI(ENV["REDIS_URL"])
+        endpoint = Async::IO::Endpoint.tcp(uri.hostname, uri.port)
+        Async::Redis::Client.new(endpoint, protocol: AuthenticatedRESP2.new([uri.password]))
+      else
+        Async::Redis::Client.new(Async::Redis.local_endpoint)
+      end
     end
 
     def publish(key, message)
       pubsub.publish(key, JSON.dump(message))
+    end
+
+    def subscribe(key, &block)
+      pubsub.subscribe(key, &block)
     end
 
     def call(env)

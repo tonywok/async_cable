@@ -30,7 +30,7 @@ module AsyncCable
 
     def subscribe(key)
       Utils::Task.new do
-        pubsub.subscribe(key) do |context|
+        server.subscribe(key) do |context|
           while true
             type, name, message = context.listen
             transmit(JSON.parse(message))
