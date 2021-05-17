@@ -9,7 +9,7 @@ module AsyncCable
     @server ||= Server.new
   end
 
-  module_function def instance(game)
-    server.instances[game.id] ||= GameInstance.new(game: game)
+  module_function def instance(id)
+    server.instances.fetch(id)
   end
 end

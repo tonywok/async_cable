@@ -15,19 +15,6 @@ module AsyncCable
     delegate :handle, to: :subscriptions
     delegate :pubsub, :publish, to: :server
 
-    # TODO: USER LAND
-    def authorize!
-      raise AuthorizationError unless current_user.present?
-      welcome
-      ping_task.start
-    end
-
-    FakeUser = Struct.new(:id, keyword_init: true)
-    def current_user
-      @current_user ||= FakeUser.new(id: cookies.signed["user.id"])
-    end
-    # TODO: USER LAND
-
     def subscribe(key)
       Utils::Task.new do
         server.subscribe(key) do |context|

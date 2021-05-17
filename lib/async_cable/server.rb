@@ -43,7 +43,7 @@ module AsyncCable
 
     def call(env)
       response = Async::WebSocket::Adapters::Rack.open(env, protocols: ["actioncable-v1-json"]) do |websocket_connection|
-        connection = Connection.new(self, env, websocket_connection)
+        connection = ApplicationCable::Connection.new(self, env, websocket_connection)
         connection.authorize!
         connections << connection
 
